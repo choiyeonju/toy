@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>알린 카드 게임</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css">
+</head>
+<body>
+<div class="gameArea3">
+
+    <div id="Allin-game-title">
+        <h3>알린의 단판 승부 카드게임 </h3>
+    </div>
+    <div id="card-box">
+        <div class="card" id="card1"></div>
+        <div class="card" id="card2"></div>
+        <div class="card" id="card3"></div>
+    </div>
+
+    <div id="myModal" class="modal-Allin" style="display: block;">
+        <div class="modal-content">
+            <p><span class="green2"> ▶ </span><span class="grey">(웅성웅성)</span> 카드~~ <span class="grey">(웅성웅성)</span></p>
+            <button class="next">다음</button>
+        </div>
+    </div>
+</div>
+
+<div id="controls">
+    <button id="toggleMusicButton" class="control-button">
+        <img id="musicButtonImage" src="img/AudioOn.png" alt="Toggle Music">
+    </button>
+    <button id="upButton" class="control-button">
+        <img src="img/ArrowUp.png" alt="Move Up">
+    </button>
+    <button id="leftButton" class="control-button">
+        <img src="img/ArrowLeft.png" alt="Move Left">
+    </button>
+    <button id="rightButton" class="control-button">
+        <img src="img/ArrowRight.png" alt="Move Right">
+    </button>
+    <button id="downButton" class="control-button">
+        <img src="img/ArrowDown.png" alt="Move Down">
+    </button>
+</div>
+
+<audio id="backgroundMusic" loop>
+    <source src="img/Buzz.mp3" type="audio/mpeg">
+</audio>
+<audio id="clickSound">
+    <source src="img/clickSound.mp3" type="audio/mpeg">
+</audio>
+<audio id="gameOverSound">
+    <source src="img/MP_Sad Trombone.mp3" type="audio/mpeg">
+</audio>
+<audio id="gameClearSound">
+    <source src="img/gameClearSound.mp3" type="audio/mpeg">
+</audio>
+
+
+<script>
+
+
+    const dialog = [
+        "<span class=\"grey\">(웅성웅성)</span> 카드~~ <span class=\"grey\">(웅성웅성)</span>",
+        "<span class=\"grey\">(웅성웅성)</span> 골라~~ <span class=\"grey\">(웅성웅성)</span>",
+        "<span class=\"grey\">(웅성웅성)</span> 게임~~ <span class=\"grey\">(웅성웅성)</span> ",
+    ];
+    let dialogIndex = 0;
+
+    const modal = document.getElementById("myModal");
+    const nextButton = document.querySelector(".next");
+    const cards = document.querySelectorAll('.card');
+
+    // 오디오 요소
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    const clickSound = document.getElementById('clickSound');
+    const gameOverSound = document.getElementById('gameOverSound');
+    const gameClearSound = document.getElementById('gameClearSound');
+
+    const musicButton = document.getElementById('toggleMusicButton');
+    const musicButtonImage = document.getElementById('musicButtonImage');
+
+    // 게임 클리어 시 사운드 재생
+    function playGameClearSound() {
+        gameClearSound.play();
+    }
+
+    // 게임 초기화
+    function initializeGame() {
+        cards.forEach(card => {
+            card.style.backgroundImage = 'url("img/card1.png")';
+            card.onclick = checkCard;
+        });
+        winningCard = Math.floor(Math.random() * cards.length);
+        console.log('Winning card:', winningCard);
+    }
+
+    // 카드 체크
+    function checkCard(event) {
+        const selectedCard = Array.from(cards).indexOf(event.target);
+        if (selectedCard === winningCard) {
+            event.target.style.backgroundImage = 'url("img/card2.png")';
+            const img = document.createElement('img');
+            img.src = 'url("img/card2.png")';
+            img.alt = '당첨';
+            event.target.appendChild(img);
+            playGameClearSound();
+            setTimeout(() => {
+                window.location.href = 'index5.html';
+            }, 1000);
+        } else {
+            event.target.style.backgroundImage = 'url("img/card3.png")';
+            const img = document.createElement('img');
+            img.src = 'url("img/card3.png")';
+            img.alt = '꽝';
+            event.target.appendChild(img);
+            gameOverSound.play();
+            setTimeout(() => {
+                showModal('실패~~');
+            }, 1000);
+        }
+        cards.forEach(card => card.onclick = null);
+    }
+
+    // 다음 대사를 보여주는 함수
+    function showNextDialog() {
+        clickSound.play();
+        dialogIndex++;
+        if (dialogIndex < dialog.length) {
+            modal.querySelector("p").innerHTML = `<span class="green2"> ▶ </span>${dialog[dialogIndex]}`;
+        } else {
+            modal.style.display = "none";
+            initializeGame();
+        }
+    }
+
+    nextButton.addEventListener('click', showNextDialog);
+
+    // 모달 보이게
+    function showModal(message) {
+        const modalMessage = modal.querySelector('p');
+        modalMessage.textContent = message;
+        modal.style.display = "block";
+    }
+
+    // 모달 숨기기
+    document.getElementById('closeModal').onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // 게임 초기화
+    initializeGame();
+
+    musicButton.addEventListener('click', () => {
+        if (backgroundMusic.paused) {
+            backgroundMusic.play();
+            musicButtonImage.src = 'img/AudioOn.png';
+        } else {
+            backgroundMusic.pause();
+            musicButtonImage.src = 'img/AudioOff.png';
+        }
+    });
+
+    // 페이지 로드 시 배경 음악 재생
+    backgroundMusic.play();
+
+</script>
+</body>
+</html>
+

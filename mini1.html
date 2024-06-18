@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>렉스의 그림 맞추기</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css">
+</head>
+<body>
+<div id="gameArea2">
+    <div id="credits-container">
+        <h2 id="Credits">남은횟수</h2>
+        <div id="hearts"></div>
+    </div>
+    <div id="rex-game-title">
+        <h3>렉스의 그림 맞추기 게임 </h3>
+    </div>
+    <div id="bored">
+        <img id="photo" src="" alt="Photo">
+        <h2 id="question"> &nbsp; 그림을 보고 누구인지 맞춰보세요 !</h2>
+        <div id="choices"></div>
+    </div>
+
+    <div id="customModal" class="modal-rex">
+        <div class="modal-content">
+            <span class="close" id="closeModal">OK</span>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+</div>
+
+<div id="myModal" class="modal-rex">
+    <div class="modal-content">
+        <p><span class="green"> ▶ </span>내 친구 앤디가 그린 그림을 보고 그림을 맞추면 돼</p>
+        <button class="next">다음</button>
+    </div>
+</div>
+
+
+<div id="controls">
+    <button id="toggleMusicButton" class="control-button">
+        <img id="musicButtonImage" src="img/AudioOn.png" alt="Toggle Music">
+    </button>
+    <button id="upButton" class="control-button">
+        <img src="img/ArrowUp.png" alt="Move Up">
+    </button>
+    <button id="leftButton" class="control-button">
+        <img src="img/ArrowLeft.png" alt="Move Left">
+    </button>
+    <button id="rightButton" class="control-button">
+        <img src="img/ArrowRight.png" alt="Move Right">
+    </button>
+    <button id="downButton" class="control-button">
+        <img src="img/ArrowDown.png" alt="Move Down">
+    </button>
+</div>
+
+<audio id="backgroundMusic" loop>
+    <source src="img/Strange Things.mp3" type="audio/mpeg">
+</audio>
+<audio id="clickSound">
+    <source src="img/clickSound.mp3" type="audio/mpeg">
+</audio>
+<audio id="correctSound">
+    <source src="img/correctSound.mp3" type="audio/mpeg">
+</audio>
+<audio id="wrongSound">
+    <source src="img/wrongSound.mp3" type="audio/mpeg">
+</audio>
+<audio id="gameOverSound">
+    <source src="img/MP_Sad Trombone.mp3" type="audio/mpeg">
+</audio>
+<audio id="gameClearSound">
+    <source src="img/gameClearSound.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+
+    const dialog = [
+        " 내 친구 앤디가 그린 그림을 보고 그림을 맞추면 돼 ",
+        " 규칙은 3번 틀리면 처음부터 다시 해야된다는 거야 ",
+        " 쉽지?? 이제 시작한다 ~~!! ",
+    ];
+    let dialogIndex = 0;
+
+    // 모달 요소와 다음 버튼 요소
+    var modal = document.getElementById("myModal");
+    var nextButton = document.getElementsByClassName("next")[0];
+
+    // 오디오 요소
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    const clickSound = document.getElementById('clickSound');
+    const correctSound = document.getElementById('correctSound');
+    const wrongSound = document.getElementById('wrongSound');
+    const gameOverSound = document.getElementById('gameOverSound');
+    const gameClearSound = document.getElementById('gameClearSound');
+
+    const musicButton = document.getElementById('toggleMusicButton');
+    const musicButtonImage = document.getElementById('musicButtonImage');
+
+    // 게임 클리어 시 사운드 재생
+    function playGameClearSound() {
+        gameClearSound.play();
+    }
+
+    // 정답일 때 사운드 재생
+    function checkAnswer(selectedChoice) {
+        const correctAnswer = questions[currentQuestionIndex].correctAnswer;
+
+        if (selectedChoice === correctAnswer) {
+            loadNextQuestion();
+            correctSound.play();
+        } else {
+            showModal('잘 생각해봐~!!');
+            chancesLeft--;
+            wrongSound.play();
+            if (chancesLeft > 0) {
+                updateHearts();
+            } else {
+                showModal('기회가 다 끝났어~!! 처음부터 다시 시작!!');
+                resetGame();
+                gameOverSound.play();
+            }
+        }
+    }
+
+    // 모달 표시 및 사운드 재생
+    function showModal(message) {
+        const modal = document.getElementById('customModal');
+        const modalMessage = document.getElementById('modalMessage');
+        modalMessage.textContent = message;
+        modal.style.display = "block";
+    }
+
+    // myModal을 표시하는 함수
+    function showMyModal() {
+        modal.style.display = "block";
+    }
+
+    // 다음 대사를 보여주는 함수
+    function showNextDialog() {
+        clickSound.play();
+        dialogIndex++;
+        if (dialogIndex < dialog.length) {
+            modal.querySelector("p").innerHTML = `<span class="green"> ▶ </span>${dialog[dialogIndex]}`;
+        } else {
+            modal.style.display = "none";
+        }
+    }
+
+    nextButton.addEventListener('click', showNextDialog);
+
+    // 모달 보이게
+    function showModal(message) {
+        const modal = document.getElementById('customModal');
+        const modalMessage = document.getElementById('modalMessage');
+        modalMessage.textContent = message;
+        modal.style.display = "block";
+    }
+
+    // 모달 숨기기
+    document.getElementById('closeModal').onclick = function() {
+        const modal = document.getElementById('customModal');
+        modal.style.display = "none";
+    }
+
+    // 남은 횟수 하트 표시
+    function updateHearts() {
+        const heartsContainer = document.getElementById('hearts');
+        heartsContainer.innerHTML = '';
+
+        for (let i = 0; i < chancesLeft; i++) {
+            const heart = document.createElement('img');
+            heart.src = "img/hearts.png";
+            heart.alt = "Heart";
+            heartsContainer.appendChild(heart);
+        }
+    }
+
+    // 페이지 로드 시 첫 번째 질문 로드
+    window.onload = () => {
+        loadQuestion(currentQuestionIndex);
+        showMyModal();
+    };
+
+    // 3가지 퀴즈 배열
+    const questions = [
+        {
+            image: "img/post-1.png",
+            choices: ["버즈", "우디", "렉스"],
+            correctAnswer: "우디"
+        },
+        {
+            image: "img/post-2.png",
+            choices: ["버즈", "슬링키", "렉스"],
+            correctAnswer: "렉스"
+        },
+        {
+            image: "img/post-3.png",
+            choices: ["슬링키", "포테토헤드", "미스터"],
+            correctAnswer: "포테토헤드"
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let chancesLeft = 3;
+
+    function loadQuestion(index) {
+        const photoElement = document.getElementById('photo');
+        const choicesContainer = document.getElementById('choices');
+
+        photoElement.src = questions[index].image;
+        choicesContainer.innerHTML = '';
+
+        questions[index].choices.forEach(choice => {
+            const button = document.createElement('button');
+            button.textContent = choice;
+            button.onclick = () => checkAnswer(choice);
+            choicesContainer.appendChild(button);
+        });
+
+        updateHearts();
+    }
+
+    // 버튼을 눌렀을 때 정답과 오답 확인
+    function checkAnswer(selectedChoice) {
+        const correctAnswer = questions[currentQuestionIndex].correctAnswer;
+
+        if (selectedChoice === correctAnswer) {
+            loadNextQuestion();
+            correctSound.play();
+        } else {
+            showModal('잘 생각해봐~!!');
+            chancesLeft--;
+            wrongSound.play();
+            if (chancesLeft > 0) {
+                updateHearts();
+            } else {
+                showModal('기회가 다 끝났어~!! 처음부터 다시 시작!!');
+                resetGame();
+                gameOverSound.play();
+            }
+        }
+    }
+
+    function loadNextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            let nextQuestionSound;
+            if (currentQuestionIndex === 0) {
+                nextQuestionSound = correctSound;
+            } else {
+                nextQuestionSound = clickSound;
+            }
+            showModal('역시 너가 맞출 줄 알았어!! 대단해!!');
+            nextQuestionSound.play();
+            loadQuestion(currentQuestionIndex);
+        } else {
+            playGameClearSound();
+            setTimeout(() => {
+                window.location.href = 'index2.html';
+            }, 1000);
+
+        }
+    }
+
+
+    // 하트가 전부 소진되었을때 리플레이
+    function resetGame() {
+        currentQuestionIndex = 0;
+        chancesLeft = 3;
+        loadQuestion(currentQuestionIndex);
+    }
+
+    musicButton.addEventListener('click', () => {
+        if (backgroundMusic.paused) {
+            backgroundMusic.play();
+            musicButtonImage.src = 'img/AudioOn.png';
+        } else {
+            backgroundMusic.pause();
+            musicButtonImage.src = 'img/AudioOff.png';
+        }
+    });
+
+    // 페이지 로드 시 배경 음악 재생
+    backgroundMusic.play();
+
+
+</script>
+
+
+
+</body>
+</html>

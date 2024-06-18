@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>토이스토리 미니게임6</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css">
+</head>
+<body>
+<div id="gameArea">
+    <div id="Shadow2"></div>
+    <div id="player" data-direction="down" data-walking="false"></div>
+    <div id="Obs-bad" class="obstacle"></div>
+    <div id="Obs-Blocks" class="obstacle"></div>
+    <div id="Obs-wall" class="obstacle"></div>
+    <div id="Obs-wall1" class="obstacle"></div>
+    <div id="Obs-wall2" class="obstacle"></div>
+    <div id="Obs-wall3" class="obstacle"></div>
+    <div id="Obs-Drawer" class="obstacle"></div>
+    <div id="Obs-ToyBox" class="obstacle"></div>
+    <div id="Game-Rex"></div>
+    <div id="Game-Allin"></div>
+    <div id="Game-PotatoHead"></div>
+    <div id="Game-Slinky"></div>
+    <div id="Game-Hem"></div>
+    <div id="end"></div>
+</div>
+
+<!-- 초기 대사 모달 -->
+<div id="initialModal" class="modal-Slinky" style="display: block;">
+    <div class="modal-content">
+        <p><span class="brown"> ▶ </span> 이야 너 정말 기억력 좋다~ </p>
+        <button class="nextInitial">다음</button>
+    </div>
+</div>
+
+<!-- 게임 대사 모달 -->
+<div id="myModal" class="modal-player2" style="display: none;">
+    <div class="modal-content">
+        <p><span class="brown"> ▶ </span>으음.. 여긴 어디지.. 내 방이구나</p>
+        <button class="next">다음</button>
+    </div>
+</div>
+
+<div id="controls">
+    <button id="toggleMusicButton" class="control-button">
+        <img id="musicButtonImage" src="img/AudioOn.png" alt="Toggle Music">
+    </button>
+    <button id="upButton" class="control-button">
+        <img src="img/ArrowUp.png" alt="Move Up">
+    </button>
+    <button id="leftButton" class="control-button">
+        <img src="img/ArrowLeft.png" alt="Move Left">
+    </button>
+    <button id="rightButton" class="control-button">
+        <img src="img/ArrowRight.png" alt="Move Right">
+    </button>
+    <button id="downButton" class="control-button">
+        <img src="img/ArrowDown.png" alt="Move Down">
+    </button>
+</div>
+
+<audio id="clickSound">
+    <source src="img/clickSound.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<audio id="endSound">
+    <source src="img/end.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<audio id="finalEndingSound">
+    <source src="img/You've Got a Friend in Me.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const initialDialog = [
+            "이야 너 정말 기억력 좋다~",
+            "덕분에 잘 놀았어",
+            "이제 집으로 돌아갈 시간이구나",
+            "천천히 눈을 감았다 떠 봐~"
+        ];
+        const gameDialog = [
+            "으음.. 여긴 어디지.. 내 방이구나",
+            "역시 꿈이었던 건가?",
+            "잠깐 손에 이건 뭐지?"
+        ];
+        let initialDialogIndex = 0;
+        let gameDialogIndex = 0;
+
+        const player = document.getElementById('player');
+        const initialModal = document.getElementById("initialModal");
+        const gameModal = document.getElementById("myModal");
+        const shadow = document.getElementById("Shadow2");
+        const end = document.getElementById('end');
+        const initialNextButton = document.querySelector(".nextInitial");
+        const gameNextButton = document.querySelector(".next");
+
+        const clickSound = document.getElementById('clickSound');
+        const endSound = document.getElementById('endSound');
+        const finalEndingSound = document.getElementById('finalEndingSound');
+
+        const musicButton = document.getElementById('toggleMusicButton');
+        const musicButtonImage = document.getElementById('musicButtonImage');
+
+
+
+        // 초기 플레이어 위치 설정
+        player.style.top = '530px';
+        player.style.left = '500px';
+
+        // 초기 대사를 보여주는 함수
+        function showNextInitialDialog() {
+            clickSound.play();
+            initialDialogIndex++;
+            if (initialDialogIndex < initialDialog.length) {
+                initialModal.querySelector("p").innerHTML = `<span class="brown"> ▶ </span>${initialDialog[initialDialogIndex]}`;
+            } else {
+                initialModal.style.display = "none";
+                shadow.style.display = "block"; // 쉐도우를 보이게 함
+                setTimeout(() => {
+                    shadow.style.opacity = 1; // 천천히 불투명도를 변화시킴
+                    setTimeout(() => {
+                        gameModal.style.display = "block"; // 게임 대사 모달을 표시
+                        showNextGameDialog(); // 다음 게임 대사를 보여줌
+                    }, 6000); // 6초
+                }, 100); // 100밀리초 후에 쉐도우를 보여줌
+            }
+        }
+
+        // 게임 대사를 보여주는 함수
+        function showNextGameDialog() {
+            clickSound.play();
+            if (gameDialogIndex < gameDialog.length) {
+                gameModal.querySelector("p").innerHTML = `<span class="red"> ▶ </span>${gameDialog[gameDialogIndex]}`;
+                gameDialogIndex++;
+            } else {
+                gameModal.style.display = "none";
+                setTimeout(() => {
+                    end.style.display = "block";
+                    setTimeout(() => {
+                        end.style.opacity = 1;
+                        endSound.play(); // 엔딩 사운드 재생
+                    }, 500); // 1초 후에 엔딩 사운드 재생
+                    setTimeout(() => {
+                        finalEndingSound.play(); // 최종 엔딩 노래 재생
+                    }, 2000); // 2초 후에 최종 엔딩 노래 재생
+                }, 1000); // 1초 후에 end 이미지 표시
+            }
+        }
+
+        musicButton.addEventListener('click', () => {
+            if (backgroundMusic.paused) {
+                backgroundMusic.play();
+                musicButtonImage.src = 'img/AudioOn.png';
+            } else {
+                backgroundMusic.pause();
+                musicButtonImage.src = 'img/AudioOff.png';
+            }
+        });
+
+        // 초기 대사 모달 다음 버튼 클릭 이벤트 리스너
+        initialNextButton.addEventListener('click', showNextInitialDialog);
+
+        // 게임 모달 다음 버튼 클릭 이벤트 리스너
+        gameNextButton.addEventListener('click', showNextGameDialog);
+
+    });
+</script>
+</body>
+</html>
+
+
+
+
+
+
+

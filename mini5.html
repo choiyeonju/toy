@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>슬링키 카드 게임</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css">
+</head>
+<body>
+<div class="gameArea3">
+
+    <div id="Slinky-game-title">
+        <h3>슬랭키의 짝 맞추기 게임 </h3>
+    </div>
+
+    <div class="game-container">
+        <div class="game-board" id="gameBoard">
+        </div>
+    </div>
+
+    <div id="myModal" class="modal-Slinky" style="display: block;">
+        <div class="modal-content">
+            <p><span class="brown"> ▶ </span>아까 알린이랑 한 카드 게임은 시시했지?</p>
+            <button class="next">다음</button>
+        </div>
+    </div>
+
+</div>
+
+<div id="controls">
+    <button id="toggleMusicButton" class="control-button">
+        <img id="musicButtonImage" src="img/AudioOn.png" alt="Toggle Music">
+    </button>
+    <button id="upButton" class="control-button">
+        <img src="img/ArrowUp.png" alt="Move Up">
+    </button>
+    <button id="leftButton" class="control-button">
+        <img src="img/ArrowLeft.png" alt="Move Left">
+    </button>
+    <button id="rightButton" class="control-button">
+        <img src="img/ArrowRight.png" alt="Move Right">
+    </button>
+    <button id="downButton" class="control-button">
+        <img src="img/ArrowDown.png" alt="Move Down">
+    </button>
+</div>
+
+<audio id="backgroundMusic" loop>
+    <source src="img/Strange Things.mp3" type="audio/mpeg">
+</audio>
+<audio id="clickSound">
+    <source src="img/clickSound.mp3" type="audio/mpeg">
+</audio>
+<audio id="cardSound">
+    <source src="img/cardSound.mp3" type="audio/mpeg">
+</audio>
+<audio id="gameClearSound">
+    <source src="img/gameClearSound.mp3" type="audio/mpeg">
+</audio>
+
+
+<script>
+
+
+    const dialog = [
+        "아까 알린이랑 한 카드 게임은 시시했지?",
+        "난 업그레이드된 카드 게임이야",
+        "카드 짝을 맞추면 돼 기억력이 무지 좋아야할걸~",
+    ];
+    let dialogIndex = 0;
+
+    const modal = document.getElementById("myModal");
+    const nextButton = document.querySelector(".next");
+    const cards = document.querySelectorAll('.card');
+
+    // 오디오 요소
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    const clickSound = document.getElementById('clickSound');
+    const cardSound = document.getElementById('cardSound');
+    const gameClearSound = document.getElementById('gameClearSound');
+
+    const musicButton = document.getElementById('toggleMusicButton');
+    const musicButtonImage = document.getElementById('musicButtonImage');
+
+    // 게임 클리어 시 사운드 재생
+    function playGameClearSound() {
+        gameClearSound.play();
+    }
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const gameBoard = document.getElementById('gameBoard');
+        const images = [
+            'img/card-2.png', 'img/card-2.png', 'img/card-3.png', 'img/card-3.png',
+            'img/card-4.png', 'img/card-4.png', 'img/card-5.png', 'img/card-5.png',
+            'img/card-6.png', 'img/card-6.png', 'img/card-7.png', 'img/card-7.png',
+            'img/card-8.png', 'img/card-8.png', 'img/card-9.png', 'img/card-9.png'
+        ];
+
+        // 카드 셔플
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        shuffle(images);
+
+        // 카드 요소 생성
+        images.forEach(image => {
+            const cardElement = document.createElement('div');
+            cardElement.classList.add('card2');
+            cardElement.dataset.value = image;
+
+            const cardInner = document.createElement('div');
+            cardInner.classList.add('card-inner');
+
+            const cardFront = document.createElement('div');
+            cardFront.classList.add('card-front');
+            const imgElement = document.createElement('img');
+            imgElement.src = image;
+            imgElement.style.width = '100%';
+            imgElement.style.height = '100%';
+            cardFront.appendChild(imgElement);
+
+            const cardBack = document.createElement('div');
+            cardBack.classList.add('card-back');
+
+            cardInner.appendChild(cardFront);
+            cardInner.appendChild(cardBack);
+            cardElement.appendChild(cardInner);
+            gameBoard.appendChild(cardElement);
+        });
+
+        let flippedCards = [];
+        let matchedCards = [];
+
+        // 카드 앞면을 7초 동안 보여줌
+        document.querySelectorAll('.card2').forEach(card => {
+            card.classList.add('flipped');
+        });
+
+        setTimeout(() => {
+            document.querySelectorAll('.card2').forEach(card => {
+                card.classList.remove('flipped');
+                card.addEventListener('click', onCardClick);
+            });
+        }, 7000);
+
+        function onCardClick(event) {
+            const clickedCard = event.currentTarget;
+
+            if (flippedCards.length < 2 && !clickedCard.classList.contains('flipped') && !clickedCard.classList.contains('matched')) {
+                clickedCard.classList.add('flipped');
+                flippedCards.push(clickedCard);
+                cardSound.play();
+
+                if (flippedCards.length === 2) {
+                    setTimeout(checkForMatch, 1000);
+                }
+            }
+        }
+
+        function checkForMatch() {
+            const [card1, card2] = flippedCards;
+
+            if (card1.dataset.value === card2.dataset.value) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedCards.push(card1, card2);
+                clickSound.play();
+            } else {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+                cardSound.play();
+            }
+
+            flippedCards = [];
+
+            if (matchedCards.length === images.length) {
+                setTimeout(() => {
+                    window.location.href = 'index6.html';
+                }, 1000);
+            }
+        }
+
+    // 다음 대사를 보여주는 함수
+    function showNextDialog() {
+        clickSound.play();
+        dialogIndex++;
+        if (dialogIndex < dialog.length) {
+            modal.querySelector("p").innerHTML = `<span class="brown"> ▶ </span>${dialog[dialogIndex]}`;
+        } else {
+            modal.style.display = "none";
+            initializeGame();
+        }
+    }
+
+    nextButton.addEventListener('click', showNextDialog);
+
+    // 모달 보이게
+    function showModal(message) {
+        const modalMessage = modal.querySelector('p');
+        modalMessage.textContent = message;
+        modal.style.display = "block";
+    }
+
+    // 모달 숨기기
+    document.getElementById('closeModal').onclick = function() {
+        modal.style.display = "none";
+    }
+
+    });
+
+    musicButton.addEventListener('click', () => {
+        if (backgroundMusic.paused) {
+            backgroundMusic.play();
+            musicButtonImage.src = 'img/AudioOn.png';
+        } else {
+            backgroundMusic.pause();
+            musicButtonImage.src = 'img/AudioOff.png';
+        }
+    });
+    // 페이지 로드 시 배경 음악 재생
+    backgroundMusic.play();
+
+
+
+</script>
+</body>
+</html>

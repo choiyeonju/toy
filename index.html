@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>토이스토리 미니게임1</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css">
+</head>
+<body>
+<div id="gameArea">
+    <div id="player" data-direction="down" data-walking="false"></div>
+    <div id="Obs-bad" class="obstacle"></div>
+    <div id="Obs-Blocks" class="obstacle"></div>
+    <div id="Obs-wall" class="obstacle"></div>
+    <div id="Obs-wall1" class="obstacle"></div>
+    <div id="Obs-wall2" class="obstacle"></div>
+    <div id="Obs-wall3" class="obstacle"></div>
+    <div id="Obs-Drawer" class="obstacle"></div>
+    <div id="Obs-ToyBox" class="obstacle"></div>
+    <div id="Game-Rex">
+        <div id="quest"></div>
+    </div>
+    <div id="Game-Allin"></div>
+    <div id="Game-PotatoHead"></div>
+    <div id="Game-Slinky"></div>
+    <div id="Game-Hem"></div>
+</div>
+
+<!-- 캐릭터 대사 -->
+<div id="startModal" class="modal-player" style="display: none;">
+    <div class="modal-content">
+        <p><span class="red"> ▶ </span>여기는 어제보던 토이스토리 앤디의 방인데,,</p>
+        <button class="nextStart">다음</button>
+    </div>
+</div>
+
+<!-- 게임 대사 모달 -->
+<div id="myModal" class="modal-rex">
+    <div class="modal-content">
+        <p><span class="green"> ▶ </span>넌 처음보는 것 같은데?? 앤디의 새로운 장난감이구나??</p>
+        <button class="next">다음</button>
+    </div>
+</div>
+
+<!-- 스타트 버튼 -->
+<div id="startButtonWrapper">
+    <button id="startButton"></button>
+</div>
+
+<div id="controls">
+    <button id="toggleMusicButton" class="control-button">
+        <img id="musicButtonImage" src="img/AudioOn.png" alt="Toggle Music">
+    </button>
+    <button id="upButton" class="control-button">
+        <img src="img/ArrowUp.png" alt="Move Up">
+    </button>
+    <button id="leftButton" class="control-button">
+        <img src="img/ArrowLeft.png" alt="Move Left">
+    </button>
+    <button id="rightButton" class="control-button">
+        <img src="img/ArrowRight.png" alt="Move Right">
+    </button>
+    <button id="downButton" class="control-button">
+        <img src="img/ArrowDown.png" alt="Move Down">
+    </button>
+</div>
+
+<!-- 오디오 요소 -->
+<audio id="backgroundMusic" loop>
+    <source src="img/You've Got a Friend in Me.mp3" type="audio/mpeg">
+</audio>
+<audio id="clickSound">
+    <source src="img/clickSound.mp3" type="audio/mpeg">
+</audio>
+<audio id="startSound">
+    <source src="img/GameStart.mp3" type="audio/mpeg">
+</audio>
+<audio id="rexCollisionSound">
+    <source src="img/rex2.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const player = document.getElementById('player');
+        const obstacles = document.querySelectorAll('.obstacle');
+        const playerSpeed = 8;
+        const startDialog = [
+            "여기는 어제보던 토이스토리 앤디의 방인데,,",
+            "내 몸은 왜 이렇게 작아진거지?",
+            "꿈인가..?? 일단 저 장난감들한테 말을 걸어봐야겠다!!"
+        ];
+        const gameDialog = [
+            "넌 처음보는 것 같은데?? 앤디의 새로운 장난감이구나??",
+            "난 렉스야! 자세히 보니 사람이네??",
+            "나와 게임을 하면 다시 돌아가는 법을 알려줄게!!"
+        ];
+        let startDialogIndex = 0;
+        let gameDialogIndex = 0;
+
+        // 모달 요소와 다음 버튼 요소
+        const modal = document.getElementById("myModal");
+        const startModal = document.getElementById("startModal");
+        const nextStartButton = document.querySelector(".nextStart");
+        const nextButton = document.querySelector(".next");
+        const startButtonWrapper = document.getElementById("startButtonWrapper");
+        const startButton = document.getElementById("startButton");
+
+        // 오디오 요소
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const clickSound = document.getElementById('clickSound');
+        const startSound = document.getElementById('startSound');
+        const rexCollisionSound = document.getElementById('rexCollisionSound');
+
+        const musicButton = document.getElementById('toggleMusicButton');
+        const musicButtonImage = document.getElementById('musicButtonImage');
+
+        const upButton = document.getElementById('upButton');
+        const downButton = document.getElementById('downButton');
+        const leftButton = document.getElementById('leftButton');
+        const rightButton = document.getElementById('rightButton');
+
+        // 초기 플레이어 위치 설정
+        player.style.top = '530px';
+        player.style.left = '500px';
+
+        // 두 사각형이 충돌하는지 확인하는 함수
+        const isCollision = (rect1, rect2) => {
+            return !(rect1.right < rect2.left ||
+                rect1.left > rect2.right ||
+                rect1.bottom < rect2.top ||
+                rect1.top > rect2.bottom);
+        };
+
+        // 플레이어를 이동시키는 함수
+        const movePlayer = (x, y, direction) => {
+            const gameAreaRect = document.getElementById('gameArea').getBoundingClientRect();
+            const playerRect = player.getBoundingClientRect();
+
+            const newX = playerRect.left + x;
+            const newY = playerRect.top + y;
+
+            // 장애물과의 충돌 확인
+            for (const obstacle of obstacles) {
+                if (isCollision({ left: newX, top: newY, right: newX + playerRect.width, bottom: newY + playerRect.height }, obstacle.getBoundingClientRect())) {
+                    return;
+                }
+            }
+
+            // Game-Rex 충돌 확인
+            const rexRect = document.getElementById('Game-Rex').getBoundingClientRect();
+            if (isCollision({ left: newX, top: newY, right: newX + playerRect.width, bottom: newY + playerRect.height }, rexRect)) {
+                rexCollisionSound.play(); // 렉스와의 충돌 사운드 재생
+                modal.style.display = "block";
+                document.getElementById('quest').style.display = "none";
+                return;
+            }
+
+            // 새 위치가 게임 영역 내에 있는지 확인
+            if (newX >= gameAreaRect.left && newX + playerRect.width <= gameAreaRect.right) {
+                player.style.left = player.offsetLeft + x + 'px';
+            }
+            if (newY >= gameAreaRect.top && newY + playerRect.height <= gameAreaRect.bottom) {
+                player.style.top = player.offsetTop + y + 'px';
+            }
+
+            player.dataset.direction = direction;
+            player.dataset.walking = 'true';
+        };
+
+        // 키보드 이벤트 리스너 추가
+        document.addEventListener('keydown', (event) => {
+            switch (event.key) {
+                case 'ArrowUp':
+                    movePlayer(0, -playerSpeed, 'up');
+                    break;
+                case 'ArrowDown':
+                    movePlayer(0, playerSpeed, 'down');
+                    break;
+                case 'ArrowLeft':
+                    movePlayer(-playerSpeed, 0, 'left');
+                    break;
+                case 'ArrowRight':
+                    movePlayer(playerSpeed, 0, 'right');
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', () => {
+            player.dataset.walking = 'false';
+        });
+
+        upButton.addEventListener('mousedown', () => movePlayer(0, -playerSpeed, 'up'));
+        downButton.addEventListener('mousedown', () => movePlayer(0, playerSpeed, 'down'));
+        leftButton.addEventListener('mousedown', () => movePlayer(-playerSpeed, 0, 'left'));
+        rightButton.addEventListener('mousedown', () => movePlayer(playerSpeed, 0, 'right'));
+
+        // 초기 대사를 보여주는 함수
+        function showNextStartDialog() {
+            clickSound.play();
+            if (startDialogIndex < startDialog.length - 1) {
+                startDialogIndex++;
+                startModal.querySelector("p").innerHTML = `<span class="red"> ▶ </span>${startDialog[startDialogIndex]}`;
+            } else {
+                startModal.style.display = "none";
+                startButtonWrapper.style.display = "none";
+            }
+        }
+
+        // 게임 대사를 보여주는 함수
+        function showNextGameDialog() {
+            clickSound.play();
+            if (gameDialogIndex < gameDialog.length - 1) {
+                gameDialogIndex++;
+                modal.querySelector("p").innerHTML = `<span class="green"> ▶ </span>${gameDialog[gameDialogIndex]}`;
+            } else {
+                modal.style.display = "none";
+                window.location.href = 'mini1.html';
+            }
+        }
+
+        // 스타트 버튼
+        startButton.addEventListener('click', () => {
+            startSound.play(); // 새로운 클릭 소리 재생
+            startModal.style.display = "block";
+            startButtonWrapper.style.display = "none";
+            backgroundMusic.pause();
+        });
+
+        nextStartButton.addEventListener('click', () => {
+            clickSound.play(); // 클릭 소리 재생
+            showNextStartDialog();
+        });
+
+        nextButton.addEventListener('click', () => {
+            clickSound.play(); // 클릭 소리 재생
+            showNextGameDialog();
+        });
+
+        musicButton.addEventListener('click', () => {
+            if (backgroundMusic.paused) {
+                backgroundMusic.play();
+                musicButtonImage.src = 'img/AudioOn.png';
+            } else {
+                backgroundMusic.pause();
+                musicButtonImage.src = 'img/AudioOff.png';
+            }
+        });
+
+        // 페이지 로드 시 배경 음악 재생
+        backgroundMusic.play();
+    });
+</script>
+</body>
+</html>
+

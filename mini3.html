@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>햄 동전 찾기</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css">
+</head>
+<body>
+
+<div id="gameArea" style="position: relative;">
+
+    <div id="credits-container2">
+        <h2 id="Credits">남은 기회</h2>
+        <div id="hearts"></div>
+    </div>
+
+
+    <div id="Game-Hem2"></div>
+
+
+    <div class="obstacle2" id="Obs-bad"></div>
+    <div class="obstacle2" id="Obs-Blocks"></div>
+    <div class="obstacle2" id="Obs-Drawer"></div>
+    <div class="obstacle2" id="Obs-ToyBox"></div>
+
+
+    <div class="coin" id="goodcoin1"></div>
+    <div class="coin" id="goodcoin2"></div>
+    <div class="coin" id="goodcoin3"></div>
+    <div class="coin" id="goodcoin4"></div>
+    <div class="coin" id="goodcoin5"></div>
+    <div class="coin" id="goodcoin6"></div>
+    <div class="coin" id="goodcoin7"></div>
+    <div class="badcoin" id="badcoin1"></div>
+    <div class="badcoin" id="badcoin2"></div>
+    <div class="badcoin" id="badcoin3"></div>
+</div>
+
+
+<div id="myModal" class="modal-Hem" style="display: block;">
+    <div class="modal-content">
+        <p><span class="pick"> ▶ </span>숨겨져있는 동전을 찾아서 나에게 주면 돼!</p>
+        <button class="next">다음</button>
+    </div>
+</div>
+
+<div id="controls">
+    <button id="toggleMusicButton" class="control-button">
+        <img id="musicButtonImage" src="img/AudioOn.png" alt="Toggle Music">
+    </button>
+    <button id="upButton" class="control-button">
+        <img src="img/ArrowUp.png" alt="Move Up">
+    </button>
+    <button id="leftButton" class="control-button">
+        <img src="img/ArrowLeft.png" alt="Move Left">
+    </button>
+    <button id="rightButton" class="control-button">
+        <img src="img/ArrowRight.png" alt="Move Right">
+    </button>
+    <button id="downButton" class="control-button">
+        <img src="img/ArrowDown.png" alt="Move Down">
+    </button>
+</div>
+
+<audio id="backgroundMusic" loop>
+    <source src="img/Andy's Birthday.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+<audio id="clickSound">
+    <source src="img/clickSound.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+</audio>
+<audio id="coinDropSound">
+    <source src="img/correctSound.mp3" type="audio/mpeg">
+</audio>
+<audio id="badCoinDropSound">
+    <source src="img/bad.mp3" type="audio/mpeg">
+</audio>
+<audio id="heartDepletedSound">
+    <source src="img/MP_Sad Trombone.mp3" type="audio/mpeg">
+</audio>
+<audio id="gameClearSound">
+    <source src="img/gameClearSound.mp3" type="audio/mpeg">
+</audio>
+
+
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+<script src="https://code.jquery.com/ui/1.13.3/jquery-ui.js"></script>
+
+<script>
+    const dialog = [
+        " 숨겨져있는 동전을 찾아서 나에게 주면 돼! ",
+        " 동전중에서는 가짜 동전도 있어 ",
+        " 난 진짜 동전만 취급한다~! ",
+    ];
+    let dialogIndex = 0;
+
+    // 모달 요소와 다음 버튼 요소
+    var modal = document.getElementById("myModal");
+    var nextButton = document.getElementsByClassName("next")[0];
+
+    // 오디오 요소
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    const clickSound = document.getElementById('clickSound');
+    const coinDropSound = document.getElementById('coinDropSound');
+    const badCoinDropSound = document.getElementById('badCoinDropSound');
+    const heartDepletedSound = document.getElementById('heartDepletedSound');
+    const gameClearSound = document.getElementById('gameClearSound');
+
+    const musicButton = document.getElementById('toggleMusicButton');
+    const musicButtonImage = document.getElementById('musicButtonImage');
+
+    // 동전 드롭 시 사운드 재생
+    function playCoinDropSound() {
+        coinDropSound.play();
+    }
+
+    // 악동전 드롭 시 사운드 재생
+    function playBadCoinDropSound() {
+        badCoinDropSound.play();
+    }
+
+    // 하트 소진 시 사운드 재생
+    function playHeartDepletedSound() {
+        heartDepletedSound.play();
+    }
+
+    // 게임 클리어 시 사운드 재생
+    function playGameClearSound() {
+        gameClearSound.play();
+    }
+
+    // myModal을 표시하는 함수
+    function showMyModal() {
+        modal.style.display = "block";
+    }
+
+    // 다음 대사를 보여주는 함수
+    function showNextDialog() {
+        clickSound.play();
+        dialogIndex++;
+        if (dialogIndex < dialog.length) {
+            modal.querySelector("p").innerHTML = `<span class="pick"> ▶ </span>${dialog[dialogIndex]}`;
+        } else {
+            modal.style.display = "none";
+
+            // 동전 드롭
+            $('.coin,.badcoin').draggable();
+
+            // 드롭 가능한 영역 설정
+            $('#gameArea').droppable({
+                accept: '.coin, .badcoin',
+                drop: function(event, ui) {
+                    ui.draggable.addClass('drop');
+                    ui.draggable.removeClass('active');
+
+                    // 동전을 드롭하면 동전을 숨기도록 설정
+                    ui.draggable.hide();
+
+                    if (ui.draggable.hasClass('badcoin')) {
+                        decreaseHeart();
+                        playBadCoinDropSound();
+                    } else {
+                        checkGameClear();
+                        playCoinDropSound();
+                    }
+                }
+            });
+        }
+    }
+
+    nextButton.addEventListener('click', showNextDialog);
+
+    // 클리어 체크
+    function checkGameClear() {
+        const totalCoins = $('.coin').length;
+        const droppedCoins = $('.coin.drop').length;
+
+        console.log("총 동전 개수:", totalCoins);
+        console.log("드롭된 동전 개수:", droppedCoins);
+
+        if (droppedCoins === totalCoins) {
+            playGameClearSound();
+            setTimeout(() => {
+                window.location.href = 'index4.html';
+            }, 3000);
+        }
+    }
+
+    // 하트 줄이기
+    function decreaseHeart() {
+        const heartsContainer = document.getElementById('hearts');
+        const hearts = heartsContainer.getElementsByTagName('img');
+        if (hearts.length > 0) {
+            hearts[hearts.length - 1].remove();
+            if (hearts.length === 0) {
+                playHeartDepletedSound();
+                showModal("가짜 동전은 취급 안한다니까~");
+                resetGame();
+            }
+        }
+    }
+
+    // 리플레이
+    function resetGame() {
+        $('.drop').removeClass('drop');
+        $('.coin,.badcoin').removeClass('active').show(); // 동전 보이게
+
+        // 동전을 초기 위치로 되돌리는 함수 호출
+        resetCoinPositions();
+
+
+        showMyModal();
+        updateHearts();
+    }
+
+    // 동전을 초기 위치로 되돌리기 위함
+    function resetCoinPositions() {
+        $('#goodcoin1').css({ top: 515, left: 95 });
+        $('#goodcoin2').css({ top: 328, left: 367 });
+        $('#goodcoin3').css({ top: 544, left: 284 });
+        $('#goodcoin4').css({ top: 320, left: 743 });
+        $('#goodcoin5').css({ top: 470, left: 470 });
+        $('#goodcoin6').css({ top: 570, left: 570 });
+        $('#goodcoin7').css({ top: 530, left: 800 });
+        $('#badcoin1').css({ top: 174, left: 268 });
+        $('#badcoin2').css({ top: 227, left: 531 });
+        $('#badcoin3').css({ top: 216, left: 919 });
+    }
+
+    // 모달 보이게
+    function showModal(message) {
+        const modalContent = document.querySelector(".modal-content p");
+        modalContent.innerHTML = `<span class="pick"> ▶ </span>${message}`;
+        modal.style.display = "block";
+    }
+
+    // 남은 횟수 하트 표시
+    function updateHearts() {
+        const heartsContainer = document.getElementById('hearts');
+        heartsContainer.innerHTML = '';
+
+
+        for (let i = 0; i < 3; i++) {
+            const heart = document.createElement('img');
+            heart.src = "img/hearts.png";
+            heartsContainer.appendChild(heart);
+        }
+    }
+
+    // 초기 하트 설정
+    updateHearts();
+
+    musicButton.addEventListener('click', () => {
+        if (backgroundMusic.paused) {
+            backgroundMusic.play();
+            musicButtonImage.src = 'img/AudioOn.png';
+        } else {
+            backgroundMusic.pause();
+            musicButtonImage.src = 'img/AudioOff.png';
+        }
+    });
+
+    // 페이지 로드 시 배경 음악 재생
+    backgroundMusic.play();
+
+
+</script>
+</body>
+</html>
+
+
