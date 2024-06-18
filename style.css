@@ -341,10 +341,10 @@ body {
     background: url("img/Slinky-model.png") center center no-repeat;
 }
 .modal-player {
-    background: url("img/player-model.png") center center no-repeat;
+    background: url("./img/player-model.png") center center no-repeat;
 }
 .modal-player2 {
-    background: url("img/player-model2.png") center center no-repeat;
+    background: url("./img/player-model2.png") center center no-repeat;
     z-index: 999;
 }
 
@@ -626,7 +626,7 @@ body {
     left: 870px;
     width: 81px;
     height: 105px;
-    background-image: url("img/potatoEar.png");
+    background-image: url("./img/potatoEar.png");
 }
 
 /*미니게임3*/
